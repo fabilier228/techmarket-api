@@ -3,10 +3,10 @@ const fs = require('fs');
 const path = require('path');
 
 const pool = new Pool({
-    user: 'postgres',
+    user: process.env.USER,
     host: 'localhost',
     database: 'postgres',
-    password: '123',
+    password: process.env.PASSWORD,
     port: 5432,
 });
 
