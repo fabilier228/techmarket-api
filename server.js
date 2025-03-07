@@ -4,6 +4,8 @@ const productRoutes = require("./src/routes/productRoutes");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+require('./src/config/database')
+
 app.use(express.json());
 app.use("/api/products", productRoutes);
 

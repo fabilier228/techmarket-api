@@ -1,14 +1,25 @@
-const path = require("path");
-const sqlite3 = require("sqlite3").verbose();
+const { Pool } = require('pg');
+const fs = require('fs');
+const path = require('path');
 
-const dbPath = path.resolve(__dirname, "../../database.sqlite");
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error("❌ Database connection error:", err.message);
-    } else {
-        console.log("✅ Connected to SQLite database:", dbPath);
-    }
-    console.log(dbPath)
+const pool = new Pool({
+    user: 'postgres',
+    host: 'localhost',
+    database: 'postgres',
+    password: '123',
+    port: 5432,
 });
 
-module.exports = db;
+const initDb = async () => {
+    const initScript = fs.readFileSync(path.join(__dirname, 'init.sql')).toString();
+    try {
+        await pool.query(initScript);
+        console.log('Baza danych została zainicjalizowana.');
+    } catch (err) {
+        console.error('Błąd inicjalizacji bazy danych:', err);
+    }
+};
+
+initDb();
+
+module.exports = pool;

@@ -1,95 +1,91 @@
-const { v4: uuidv4 } = require('uuid');
-const db = require("../config/database.js");
+const {v4: uuidv4} = require('uuid');
+const Product = require('../models/productModel')
 
-const getProducts = (req, res) => {
-    db.all("SELECT * FROM products", [], (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
+const getProducts = async (req, res) => {
+    const { sortBy, filter } = req.query;
+
+    try {
+        let products = await Product.getAll();
+
+        products = products.map(product => ({
+            ...product,
+            isAvailable: product.isavailable,
+            stockCount: product.stockcount,
+            imageUrl: product.imageurl
+        }));
+
+        if (filter) {
+            const isAvailable = filter === 'true';
+            products = products.filter(product => product.isAvailable === isAvailable);
         }
-        res.json(rows);
-    });
+
+        if (sortBy) {
+            products = products.sort((a, b) => {
+                if (a[sortBy] < b[sortBy]) return -1;
+                if (a[sortBy] > b[sortBy]) return 1;
+                return 0;
+            });
+        }
+        res.status(200).json(products);
+    } catch (err) {
+        res.status(500).json({error: err.message});
+    }
 };
 
-const getProductById = (req, res) => {
+const getProductById = async (req, res) => {
     const { id } = req.params;
-    db.get("SELECT * FROM products WHERE id = ?", [id], (err, row) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        if (!row) {
-            res.status(404).json({ message: `Product with ID ${id} not found` });
-            return;
-        }
-        res.json(row);
-    });
+    try {
+        const product = await Product.getById(id);
+        res.status(200).json(product);
+    } catch (err) {
+        res.status(500).json({error: err.message});
+    }
 }
 
-const addProduct = (req, res) => {
-    const { name, category, description, price, stockCount, brand, imageUrl, isAvailable } = req.body;
+const addProduct = async (req, res) => {
+    const {name, category, description, price, stockCount, brand, imageUrl, isAvailable} = req.body;
     const id = uuidv4();
-    const createdAt = new Date().toISOString();
 
-    db.run(
-        `INSERT INTO products (id, name, category, description, price, stockCount, brand, imageUrl, isAvailable, createdAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, name, category, description || "", price, stockCount || 0, brand, imageUrl || "", isAvailable ? 1 : 0, createdAt],
-        function (err) {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            res.status(201).json({ id, name, category, description, price, stockCount, brand, imageUrl, isAvailable, createdAt });
-        }
-    );
+    try {
+        const newProduct = await Product.create(id, name, category, description, price, stockCount, brand, imageUrl, isAvailable);
+        res.status(200).json(newProduct)
+    } catch (err) {
+        res.status(500).json({error: err.message})
+    }
 };
 
 
-const updateProduct = (req, res) => {
-    const { id } = req.params;
+const updateProduct = async (req, res) => {
+    const { id } = req.params; // Extract the product ID from the URL
     const { name, category, description, price, stockCount, brand, imageUrl, isAvailable } = req.body;
 
-    db.run(
-        `UPDATE products SET 
-            name = ?, 
-            category = ?, 
-            description = ?, 
-            price = ?, 
-            stockCount = ?, 
-            brand = ?, 
-            imageUrl = ?, 
-            isAvailable = ? 
-         WHERE id = ?`,
-        [name, category, description, price, stockCount, brand, imageUrl, isAvailable ? 1 : 0, id],
-        function (err) {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            if (this.changes === 0) {
-                res.status(404).json({ message: `Product with ID ${id} not found` });
-                return;
-            }
-            res.json({ id, name, category, description, price, stockCount, brand, imageUrl, isAvailable });
-        }
-    );
+    try {
+        const updatedProduct = await Product.update(id, {
+            name,
+            category,
+            description,
+            price,
+            stockCount,
+            brand,
+            imageUrl,
+            isAvailable
+        });
+
+        res.status(201).json(updatedProduct);
+    } catch (error) {
+        res.status(404).json({ error: error.message });
+    }
 };
 
-const deleteProduct = (req, res) => {
+const deleteProduct = async (req, res) => {
     const { id } = req.params;
 
-    db.run("DELETE FROM products WHERE id = ?", [id], function (err) {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        if (this.changes === 0) {
-            res.status(404).json({ message: `Product with ID ${id} not found` });
-            return;
-        }
-        res.json({ message: "Product deleted successfully" });
-    });
+    try {
+        const deletedProduct = await Product.delete(id)
+        res.status(200).json({message: "deleted product: " + id})
+    } catch (err) {
+        res.status(500).json({error: err.message})
+    }
 };
 
 module.exports = {
