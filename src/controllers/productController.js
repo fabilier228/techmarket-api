@@ -88,10 +88,35 @@ const deleteProduct = async (req, res) => {
     }
 };
 
+
+const getProductsByCategory = async (req, res) => {
+    const { category_id } = req.params;
+
+    try {
+        const foundProducts = await Product.getByCategory(category_id)
+        res.status(200).json(foundProducts)
+    } catch (err) {
+        res.status(500).json({error: err.message})
+    }
+}
+
+const getProductReviews = async (req, res) => {
+    const { product_id } = req.params;
+
+    try {
+        const reviews = await Product.getReviews(product_id)
+        res.status(200).json(reviews)
+    } catch (err) {
+        res.status(500).json({error: err.message})
+    }
+}
+
 module.exports = {
     getProducts,
     getProductById,
     addProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getProductsByCategory,
+    getProductReviews
 };
