@@ -29,4 +29,4 @@ const initDb = async () => {
 
 initDb();
 
-module.exports = { pool, initDb};
+module.exports = pool
