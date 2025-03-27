@@ -48,11 +48,11 @@ const Product = {
     },
 
     // Tworzy nowy produkt
-    create: async (id, name, category_id, description, price, stockCount, brand, imageUrl, isAvailable) => {
+    create: async (name, category_id, description, price, stockCount, brand, imageUrl, isAvailable) => {
         const { rows } = await pool.query(
-            `INSERT INTO products (id, name, category_id, description, price, stockCount, brand, imageUrl, isAvailable) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;`,
-            [id, name, category_id, description, price, stockCount, brand, imageUrl, isAvailable]
+            `INSERT INTO products (name, category_id, description, price, stockCount, brand, imageUrl, isAvailable) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;`,
+            [name, category_id, description, price, stockCount, brand, imageUrl, isAvailable]
         );
         return rows[0];
     },

@@ -24,9 +24,10 @@ const getReviewById = async (req, res) => {
 };
 
 const getReviewsByProductId = async (req, res) => {
-    const { productId } = req.params;
+    const { id } = req.params;
     try {
-        const reviews = await Review.getByProductId(productId);
+        const reviews = await Review.getByProductId(id);
+        console.log(reviews)
         res.status(200).json(reviews);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -34,9 +35,9 @@ const getReviewsByProductId = async (req, res) => {
 };
 
 const getReviewsByUserId = async (req, res) => {
-    const { userId } = req.params;
+    const { id } = req.params;
     try {
-        const reviews = await Review.getByUserId(userId);
+        const reviews = await Review.getByUserId(id);
         res.status(200).json(reviews);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -44,11 +45,11 @@ const getReviewsByUserId = async (req, res) => {
 };
 
 const addReview = async (req, res) => {
-    const { productId, userId, rating, comment } = req.body;
-    const id = uuidv4();
+    const { product_id, user_id, rating, comment } = req.body;
+    console.log(product_id, user_id)
 
     try {
-        const newReview = await Review.create(id, productId, userId, rating, comment);
+        const newReview = await Review.create(product_id, user_id, rating, comment);
         res.status(201).json(newReview);
     } catch (err) {
         res.status(500).json({ error: err.message });

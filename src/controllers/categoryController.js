@@ -25,10 +25,9 @@ const getCategoryById = async (req, res) => {
 
 const addCategory = async (req, res) => {
     const { name, description } = req.body;
-    const id = uuidv4();
 
     try {
-        const newCategory = await Category.create(id, name, description);
+        const newCategory = await Category.create(name, description);
         res.status(201).json(newCategory);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -54,9 +53,11 @@ const updateCategory = async (req, res) => {
 
 const deleteCategory = async (req, res) => {
     const { id } = req.params;
+    console.log("costam")
 
     try {
         const deletedCategory = await Category.delete(id);
+        console.log("costam",deletedCategory)
         if (!deletedCategory) {
             return res.status(404).json({ error: "Category not found" });
         }

@@ -2,7 +2,7 @@ const pool = require('../config/database');
 
 const Review = {
     getAll: async () => {
-        const { rows } = await pool.query('SELECT * FROM reviews ORDER BY created_at DESC;');
+        const { rows } = await pool.query('SELECT * FROM reviews;');
         return rows;
     },
 
@@ -12,20 +12,20 @@ const Review = {
     },
 
     getByProductId: async (product_id) => {
-        const { rows } = await pool.query('SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC;', [product_id]);
+        const { rows } = await pool.query('SELECT * FROM reviews WHERE product_id = $1;', [product_id]);
         return rows;
     },
 
     getByUserId: async (user_id) => {
-        const { rows } = await pool.query('SELECT * FROM reviews WHERE user_id = $1 ORDER BY created_at DESC;', [user_id]);
+        const { rows } = await pool.query('SELECT * FROM reviews WHERE user_id = $1;', [user_id]);
         return rows;
     },
 
-    create: async (id, product_id, user_id, rating, comment) => {
+    create: async (product_id, user_id, rating, comment) => {
         const { rows } = await pool.query(
-            `INSERT INTO reviews (id, product_id, user_id, rating, comment) 
-             VALUES ($1, $2, $3, $4, $5) RETURNING *;`,
-            [id, product_id, user_id, rating, comment]
+            `INSERT INTO reviews (product_id, user_id, rating, comment) 
+             VALUES ($1, $2, $3, $4) RETURNING *;`,
+            [product_id, user_id, rating, comment]
         );
         return rows[0];
     },

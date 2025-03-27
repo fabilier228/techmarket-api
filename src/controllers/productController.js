@@ -1,5 +1,6 @@
 const {v4: uuidv4} = require('uuid');
 const Product = require('../models/productModel')
+const Category = require('../models/categoryModel')
 
 const getProducts = async (req, res) => {
     const { sortBy, filter } = req.query;
@@ -43,26 +44,37 @@ const getProductById = async (req, res) => {
 }
 
 const addProduct = async (req, res) => {
-    const {name, category, description, price, stockCount, brand, imageUrl, isAvailable} = req.body;
-    const id = uuidv4();
+    const { name, category_id, description, price, stockCount, brand, imageUrl, isAvailable } = req.body;
 
     try {
-        const newProduct = await Product.create(id, name, category, description, price, stockCount, brand, imageUrl, isAvailable);
-        res.status(200).json(newProduct)
+        const categoryExists = await Category.getById(category_id);
+        if (!categoryExists) {
+            return res.status(400).json({ error: 'Invalid category ID' });
+        }
+        const newProduct = await Product.create(name, category_id, description, price, stockCount, brand, imageUrl, isAvailable);
+
+        res.status(201).json(newProduct);
     } catch (err) {
-        res.status(500).json({error: err.message})
+        res.status(500).json({ error: err.message });
     }
 };
 
 
 const updateProduct = async (req, res) => {
-    const { id } = req.params; // Extract the product ID from the URL
-    const { name, category, description, price, stockCount, brand, imageUrl, isAvailable } = req.body;
+    const { id } = req.params;
+    const { name, category_id, description, price, stockCount, brand, imageUrl, isAvailable } = req.body;
 
     try {
+        if (category_id) {
+            const categoryExists = await Category.getById(category_id);
+            if (!categoryExists) {
+                return res.status(400).json({ error: 'Invalid category ID' });
+            }
+        }
+
         const updatedProduct = await Product.update(id, {
             name,
-            category,
+            category_id,
             description,
             price,
             stockCount,
@@ -71,9 +83,13 @@ const updateProduct = async (req, res) => {
             isAvailable
         });
 
-        res.status(201).json(updatedProduct);
+        if (!updatedProduct) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        res.status(200).json(updatedProduct);
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 

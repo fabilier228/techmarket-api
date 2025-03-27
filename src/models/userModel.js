@@ -11,11 +11,11 @@ const User = {
         return rows[0];
     },
 
-    create: async (id, username, email, password_hash, first_name, last_name) => {
+    create: async (username, email, password_hash, first_name, last_name) => {
         const { rows } = await pool.query(
-            `INSERT INTO users (id, username, email, password_hash, first_name, last_name) 
-             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;`,
-            [id, username, email, password_hash, first_name, last_name]
+            `INSERT INTO users (username, email, password_hash, first_name, last_name) 
+             VALUES ($1, $2, $3, $4, $5) RETURNING *;`,
+            [username, email, password_hash, first_name, last_name]
         );
         return rows[0];
     },

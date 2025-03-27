@@ -11,10 +11,10 @@ const Category = {
         return rows[0];
     },
 
-    create: async (id, name, description) => {
+    create: async (name, description) => {
         const { rows } = await pool.query(
-            'INSERT INTO categories (id, name, description) VALUES ($1, $2, $3) RETURNING *;',
-            [id, name, description]
+            'INSERT INTO categories (name, description) VALUES ($1, $2) RETURNING *;',
+            [name, description]
         );
         return rows[0];
     },

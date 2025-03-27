@@ -24,11 +24,10 @@ const getUserById = async (req, res) => {
 };
 
 const addUser = async (req, res) => {
-    const { username, email, passwordHash, firstName, lastName } = req.body;
-    const id = uuidv4();
+    const { username, email, password_hash, first_name, last_name } = req.body;
 
     try {
-        const newUser = await User.create(id, username, email, passwordHash, firstName, lastName);
+        const newUser = await User.create(username, email, password_hash, first_name, last_name);
         res.status(201).json(newUser);
     } catch (err) {
         res.status(500).json({ error: err.message });
