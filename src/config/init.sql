@@ -27,10 +27,10 @@ CREATE TABLE IF NOT EXISTS products (
                         category_id INT REFERENCES categories(id) ON DELETE SET NULL,
                         description TEXT,
                         price DECIMAL(10,2) NOT NULL,
-                        stockCount INT DEFAULT 0,
+                        stock_count INT DEFAULT 0,
                         brand VARCHAR(50),
-                        imageUrl TEXT,
-                        isAvailable BOOLEAN DEFAULT TRUE
+                        image_url TEXT,
+                        is_available BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE IF NOT EXISTS reviews (
@@ -51,7 +51,7 @@ INSERT INTO users (username, email, password_hash, first_name, last_name) VALUES
                   ('ewa', 'ewa@example.com', 'hashed_password', 'Ewa', 'Johnson')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO products (name, category_id, description, price, stockCount, brand, imageUrl, isAvailable) VALUES
-                   ('Smartphone', 1, 'Latest model smartphone', 699.99, 50, 'BrandX', 'http://example.com/phone.jpg', TRUE),
+INSERT INTO products (name, category_id, description, price, stock_count, brand, image_url, is_available) VALUES
+                   ('Smartphone2222', 1, 'Latest model smartphone', 699.99, 50, 'BrandX', 'http://example.com/phone.jpg', TRUE),
                    ('Jeans', 2, 'Blue denim jeans', 49.99, 100, 'DenimCo', 'http://example.com/jeans.jpg', TRUE)
 ON CONFLICT DO NOTHING;

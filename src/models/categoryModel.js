@@ -1,46 +1,74 @@
-const pool = require('../config/database');
+const db = require('../config/database'); // Połączenie z bazą danych za pomocą Knex.js
 
 const Category = {
+    // Pobiera wszystkie kategorie
     getAll: async () => {
-        const { rows } = await pool.query('SELECT * FROM categories ORDER BY id;');
-        return rows;
+        try {
+            const categories = await db
+                .select('*') // Pobiera wszystkie kolumny z tabeli categories
+                .from('categories')
+                .orderBy('id'); // Sortowanie po id rosnąco
+            return categories;
+        } catch (err) {
+            console.error('❌ Błąd podczas pobierania kategorii:', err);
+            throw err;
+        }
     },
 
+    // Pobiera kategorię po ID
     getById: async (id) => {
-        const { rows } = await pool.query('SELECT * FROM categories WHERE id = $1;', [id]);
-        return rows[0];
+        try {
+            const category = await db
+                .select('*') // Pobiera wszystkie kolumny z tabeli categories
+                .from('categories')
+                .where('id', id) // Filtruje kategorię po id
+                .first(); // Zwraca tylko pierwszy wynik (jedną kategorię)
+            return category;
+        } catch (err) {
+            console.error('❌ Błąd podczas pobierania kategorii:', err);
+            throw err;
+        }
     },
 
+    // Tworzy nową kategorię
     create: async (name, description) => {
-        const { rows } = await pool.query(
-            'INSERT INTO categories (name, description) VALUES ($1, $2) RETURNING *;',
-            [name, description]
-        );
-        return rows[0];
+        try {
+            const [newCategory] = await db('categories')
+                .insert({ name, description })
+                .returning('*'); // Zwraca pełny obiekt nowo utworzonej kategorii
+            return newCategory;
+        } catch (err) {
+            console.error('❌ Błąd podczas tworzenia kategorii:', err);
+            throw err;
+        }
     },
 
+    // Aktualizuje istniejącą kategorię
     update: async (id, { name, description }) => {
-        const { rows } = await pool.query(`
-            UPDATE categories
-            SET
-                name = COALESCE($1, name),
-                description = COALESCE($2, description)
-            WHERE id = $3
-            RETURNING *;`, [
-            name,
-            description,
-            id
-        ]);
-
-        return rows[0];
+        try {
+            const [updatedCategory] = await db('categories')
+                .where('id', id) // Filtruje po ID
+                .update({ name, description }) // Aktualizuje wartości
+                .returning('*'); // Zwraca pełny obiekt zaktualizowanej kategorii
+            return updatedCategory;
+        } catch (err) {
+            console.error('❌ Błąd podczas aktualizacji kategorii:', err);
+            throw err;
+        }
     },
 
+    // Usuwa kategorię
     delete: async (id) => {
-        const { rows } = await pool.query(
-            'DELETE FROM categories WHERE id = $1 RETURNING *;',
-            [id]
-        );
-        return rows[0];
+        try {
+            const [deletedCategory] = await db('categories')
+                .where('id', id) // Filtruje po ID
+                .del() // Usuwa kategorię
+                .returning('*'); // Zwraca pełny obiekt usuniętej kategorii
+            return deletedCategory;
+        } catch (err) {
+            console.error('❌ Błąd podczas usuwania kategorii:', err);
+            throw err;
+        }
     }
 };
 

@@ -5,8 +5,7 @@ const {
     addProduct,
     updateProduct,
     deleteProduct,
-    getProductsByCategory,
-    getProductReviews
+    productsFromCategory
 } = require("../controllers/productController");
 
 const router = express.Router();
@@ -17,8 +16,7 @@ router.get("/:id", getProductById);
 router.post("/", addProduct);
 router.put("/:id", updateProduct);
 router.delete("/:id", deleteProduct);
-router.get('/category/:id/products', getProductsByCategory);
-router.get('/reviews/product/:id', getProductReviews);
+router.get('/category/:id/products', productsFromCategory);
 
 
 module.exports = router;

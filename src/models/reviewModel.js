@@ -1,57 +1,102 @@
-const pool = require('../config/database');
+const db = require('../config/database');
 
 const Review = {
     getAll: async () => {
-        const { rows } = await pool.query('SELECT * FROM reviews;');
-        return rows;
+        try {
+            const reviews = await db
+                .select('*')
+                .from('reviews');
+            return reviews;
+        } catch (err) {
+            console.error('❌ Błąd podczas pobierania recenzji:', err);
+            throw err;
+        }
     },
 
+    // Pobiera recenzję po ID
     getById: async (id) => {
-        const { rows } = await pool.query('SELECT * FROM reviews WHERE id = $1;', [id]);
-        return rows[0];
+        try {
+            const review = await db
+                .select('*')
+                .from('reviews')
+                .where('id', id)
+                .first();
+            return review;
+        } catch (err) {
+            console.error('❌ Błąd podczas pobierania recenzji po ID:', err);
+            throw err;
+        }
     },
 
     getByProductId: async (product_id) => {
-        const { rows } = await pool.query('SELECT * FROM reviews WHERE product_id = $1;', [product_id]);
-        return rows;
+        try {
+            const reviews = await db
+                .select('*')
+                .from('reviews')
+                .where('product_id', product_id);
+            return reviews;
+        } catch (err) {
+            console.error('❌ Błąd podczas pobierania recenzji po product_id:', err);
+            throw err;
+        }
     },
 
+    // Pobiera recenzje po ID użytkownika
     getByUserId: async (user_id) => {
-        const { rows } = await pool.query('SELECT * FROM reviews WHERE user_id = $1;', [user_id]);
-        return rows;
+        try {
+            const reviews = await db
+                .select('*')
+                .from('reviews')
+                .where('user_id', user_id);
+            return reviews;
+        } catch (err) {
+            console.error('❌ Błąd podczas pobierania recenzji po user_id:', err);
+            throw err;
+        }
     },
 
+    // Tworzy nową recenzję
     create: async (product_id, user_id, rating, comment) => {
-        const { rows } = await pool.query(
-            `INSERT INTO reviews (product_id, user_id, rating, comment) 
-             VALUES ($1, $2, $3, $4) RETURNING *;`,
-            [product_id, user_id, rating, comment]
-        );
-        return rows[0];
+        try {
+            const { rows } = await db.raw(`
+                INSERT INTO reviews (product_id, user_id, rating, comment)
+                VALUES (?, ?, ?, ?)
+                RETURNING *;
+            `, [product_id, user_id, rating, comment]);
+
+            return rows[0]; // Zwraca pełny obiekt nowo utworzonej recenzji
+        } catch (err) {
+            console.error('❌ Błąd podczas tworzenia recenzji:', err);
+            throw err;
+        }
     },
 
+    // Aktualizuje istniejącą recenzję
     update: async (id, { rating, comment }) => {
-        const { rows } = await pool.query(`
-        UPDATE reviews
-        SET 
-            rating = COALESCE($1, rating),
-            comment = COALESCE($2, comment)
-        WHERE id = $3
-        RETURNING *;`, [
-            rating,
-            comment,
-            id
-        ]);
-
-        return rows[0];
+        try {
+            const [updatedReview] = await db('reviews')
+                .where('id', id)
+                .update({ rating, comment })
+                .returning('*');
+            return updatedReview;
+        } catch (err) {
+            console.error('❌ Błąd podczas aktualizacji recenzji:', err);
+            throw err;
+        }
     },
 
+    // Usuwa recenzję
     delete: async (id) => {
-        const { rows } = await pool.query(
-            'DELETE FROM reviews WHERE id = $1 RETURNING *;',
-            [id]
-        );
-        return rows[0];
+        try {
+            const [deletedReview] = await db('reviews')
+                .where('id', id)
+                .del() // Usuwa recenzję
+                .returning('*');
+            return deletedReview;
+        } catch (err) {
+            console.error('❌ Błąd podczas usuwania recenzji:', err);
+            throw err;
+        }
     }
 };
 

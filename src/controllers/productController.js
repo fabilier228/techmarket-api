@@ -8,13 +8,6 @@ const getProducts = async (req, res) => {
     try {
         let products = await Product.getAll();
 
-        products = products.map(product => ({
-            ...product,
-            isAvailable: product.isavailable,
-            stockCount: product.stockcount,
-            imageUrl: product.imageurl
-        }));
-
         if (filter) {
             const isAvailable = filter === 'true';
             products = products.filter(product => product.isAvailable === isAvailable);
@@ -27,6 +20,7 @@ const getProducts = async (req, res) => {
                 return 0;
             });
         }
+        console.log("controller", products)
         res.status(200).json(products);
     } catch (err) {
         res.status(500).json({error: err.message});
@@ -44,14 +38,14 @@ const getProductById = async (req, res) => {
 }
 
 const addProduct = async (req, res) => {
-    const { name, category_id, description, price, stockCount, brand, imageUrl, isAvailable } = req.body;
+    const { name, category_id, description, price, stock_count, brand, image_url, is_available } = req.body;
 
     try {
         const categoryExists = await Category.getById(category_id);
         if (!categoryExists) {
             return res.status(400).json({ error: 'Invalid category ID' });
         }
-        const newProduct = await Product.create(name, category_id, description, price, stockCount, brand, imageUrl, isAvailable);
+        const newProduct = await Product.create(name, category_id, description, price, stock_count, brand, image_url, is_available);
 
         res.status(201).json(newProduct);
     } catch (err) {
@@ -72,16 +66,10 @@ const updateProduct = async (req, res) => {
             }
         }
 
-        const updatedProduct = await Product.update(id, {
-            name,
-            category_id,
-            description,
-            price,
-            stockCount,
-            brand,
-            imageUrl,
-            isAvailable
-        });
+        const currentProductInfo = await Product.getById(id);
+        const newProductInfo = Object.assign(currentProductInfo, req.body)
+
+        const updatedProduct = await Product.update(id, newProductInfo);
 
         if (!updatedProduct) {
             return res.status(404).json({ error: 'Product not found' });
@@ -104,28 +92,17 @@ const deleteProduct = async (req, res) => {
     }
 };
 
-
-const getProductsByCategory = async (req, res) => {
-    const { category_id } = req.params;
+const productsFromCategory = async (req, res) => {
+    const { id } = req.params;
 
     try {
-        const foundProducts = await Product.getByCategory(category_id)
-        res.status(200).json(foundProducts)
+        const products = await Product.getProductsFromCategory(id);
+        res.status(200).json(products)
     } catch (err) {
         res.status(500).json({error: err.message})
     }
 }
 
-const getProductReviews = async (req, res) => {
-    const { product_id } = req.params;
-
-    try {
-        const reviews = await Product.getReviews(product_id)
-        res.status(200).json(reviews)
-    } catch (err) {
-        res.status(500).json({error: err.message})
-    }
-}
 
 module.exports = {
     getProducts,
@@ -133,6 +110,5 @@ module.exports = {
     addProduct,
     updateProduct,
     deleteProduct,
-    getProductsByCategory,
-    getProductReviews
+    productsFromCategory
 };

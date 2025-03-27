@@ -27,7 +27,6 @@ const getReviewsByProductId = async (req, res) => {
     const { id } = req.params;
     try {
         const reviews = await Review.getByProductId(id);
-        console.log(reviews)
         res.status(200).json(reviews);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -46,7 +45,6 @@ const getReviewsByUserId = async (req, res) => {
 
 const addReview = async (req, res) => {
     const { product_id, user_id, rating, comment } = req.body;
-    console.log(product_id, user_id)
 
     try {
         const newReview = await Review.create(product_id, user_id, rating, comment);

@@ -36,10 +36,11 @@ const addUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
-    const { username, email, passwordHash, firstName, lastName } = req.body;
+    const { username, email, password_hash, firstName, lastName } = req.body;
+    console.log(req.body)
 
     try {
-        const updatedUser = await User.update(id, { username, email, passwordHash, firstName, lastName });
+        const updatedUser = await User.update(id, { username, email, password_hash, firstName, lastName });
 
         if (!updatedUser) {
             return res.status(404).json({ error: "User not found" });

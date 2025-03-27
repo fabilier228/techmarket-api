@@ -1,53 +1,73 @@
-const pool = require('../config/database');
+const db = require('../config/database');
 
 const User = {
     getAll: async () => {
-        const { rows } = await pool.query('SELECT * FROM users ORDER BY id;');
-        return rows;
+        try {
+            const users = await db
+                .select('*')
+                .from('users')
+                .orderBy('id');
+            return users;
+        } catch (err) {
+            console.error('❌ Błąd podczas pobierania użytkowników:', err);
+            throw err;
+        }
     },
 
+    // Pobiera użytkownika po ID
     getById: async (id) => {
-        const { rows } = await pool.query('SELECT * FROM users WHERE id = $1;', [id]);
-        return rows[0];
+        try {
+            const user = await db
+                .select('*')
+                .from('users')
+                .where('id', id)
+                .first();
+            return user;
+        } catch (err) {
+            console.error('❌ Błąd podczas pobierania użytkownika po ID:', err);
+            throw err;
+        }
     },
 
+    // Tworzy nowego użytkownika
     create: async (username, email, password_hash, first_name, last_name) => {
-        const { rows } = await pool.query(
-            `INSERT INTO users (username, email, password_hash, first_name, last_name) 
-             VALUES ($1, $2, $3, $4, $5) RETURNING *;`,
-            [username, email, password_hash, first_name, last_name]
-        );
-        return rows[0];
+        try {
+            const [newUser] = await db('users')
+                .insert({ username, email, password_hash, first_name, last_name })
+                .returning('*');
+            return newUser;
+        } catch (err) {
+            console.error('❌ Błąd podczas tworzenia użytkownika:', err);
+            throw err;
+        }
     },
 
+    // Aktualizuje istniejącego użytkownika
     update: async (id, { username, email, password_hash, first_name, last_name }) => {
-        const { rows } = await pool.query(`
-        UPDATE users
-        SET 
-            username = COALESCE($1, username),
-            email = COALESCE($2, email),
-            password_hash = COALESCE($3, password_hash),
-            first_name = COALESCE($4, first_name),
-            last_name = COALESCE($5, last_name)
-        WHERE id = $6
-        RETURNING *;`, [
-            username,
-            email,
-            password_hash,
-            first_name,
-            last_name,
-            id
-        ]);
-
-        return rows[0];
+        try {
+            const [updatedUser] = await db('users')
+                .where('id', id)
+                .update({ username, email, password_hash, first_name, last_name })
+                .returning('*');
+            return updatedUser;
+        } catch (err) {
+            console.error('❌ Błąd podczas aktualizacji użytkownika:', err);
+            throw err;
+        }
     },
 
+    // Usuwa użytkownika
     delete: async (id) => {
-        const { rows } = await pool.query(
-            'DELETE FROM users WHERE id = $1 RETURNING *;',
-            [id]
-        );
-        return rows[0];
+        try {
+            const [deletedUser] = await db('users')
+                .where('id', id)
+                .del()
+                .returning('*');
+            return deletedUser;
+        } catch (err) {
+            console.error('❌ Błąd podczas usuwania użytkownika:', err);
+            throw err;
+        }
     }
 };
 
