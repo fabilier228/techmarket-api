@@ -1,5 +1,5 @@
 const { connectToDatabase } = require("../config/mongo");
-const cartSchema = require("../models/cart");
+const cartSchema = require("../schemas/cartSchema");
 
 
 const addToCart = async (req, res) => {
@@ -50,7 +50,23 @@ const getCart = async (req, res) => {
 
         const cart = await cartCollection.find({userId: parseInt(userId)}).toArray();
 
-        res.status(200).json(cart || { userId, items: [] });
+        if (cart.length === 0) {
+            return res.status(404).json({ error: "Koszyk jest pusty lub nie istnieje" });
+        }
+
+        const newCart = cart.reduce((acc, item) => {
+            console.log(item);
+            acc.items.push({ productId: item.productId, quantity: item.quantity });
+            return acc;
+        }, {
+            id: cart[0]._id,
+            userId: cart[0].userId,
+            items: []
+        });
+
+        console.log(newCart)
+
+        res.status(200).json(newCart || { userId, items: [] });
     } catch (error) {
         res.status(500).json({ error: "Błąd serwera" });
     }

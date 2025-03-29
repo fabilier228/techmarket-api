@@ -1,96 +1,129 @@
-const { v4: uuidv4 } = require('uuid');
-const Review = require('../models/reviewModel');
+const { ObjectId } = require("mongodb");
 
-const getReviews = async (req, res) => {
-    try {
-        const reviews = await Review.getAll();
-        res.status(200).json(reviews);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
+const {
+    updateReview,
+    getReviewsWithFilters,
+    deleteReview,
+    createNewReview,
+    getReview, getAll
+} = require('../models/reviewModel');
 
-const getReviewById = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const review = await Review.getById(id);
-        if (!review) {
-            return res.status(404).json({ error: "Review not found" });
-        }
-        res.status(200).json(review);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-const getReviewsByProductId = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const reviews = await Review.getByProductId(id);
-        res.status(200).json(reviews);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-const getReviewsByUserId = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const reviews = await Review.getByUserId(id);
-        res.status(200).json(reviews);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
 
 const addReview = async (req, res) => {
-    const { product_id, user_id, rating, comment } = req.body;
-
     try {
-        const newReview = await Review.create(product_id, user_id, rating, comment);
-        res.status(201).json(newReview);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
+        const reviewData = req.body;
+        const reviewId = await createNewReview(reviewData);
 
-const updateReview = async (req, res) => {
-    const { id } = req.params;
-    const { rating, comment } = req.body;
-
-    try {
-        const updatedReview = await Review.update(id, { rating, comment });
-
-        if (!updatedReview) {
-            return res.status(404).json({ error: "Review not found" });
+        if (!reviewId) {
+            return res.status(400).json({error: "Nie udało się dodać recenzji"})
         }
 
-        res.status(200).json(updatedReview);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
-const deleteReview = async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const deletedReview = await Review.delete(id);
-        if (!deletedReview) {
-            return res.status(404).json({ error: "Review not found" });
-        }
-        res.status(200).json({ message: `Deleted review: ${id}` });
+        res.status(200).json({message: `Dodano recenzje, id: ${reviewId}`})
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: "Błąd serwera" });
+    }
+
+}
+
+const getAllReviews = async (req, res) => {
+    try {
+        const reviews = await getAll();
+        if (!reviews) {
+            return res.status(400).json({error: "Nie ma żadnych recenzji"})
+        }
+        res.status(200).json(reviews)
+    } catch (err) {
+        res.status(500).json({ error: "Błąd serwera" });
+    }
+}
+
+const getProductReviewsWithFilters = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const { query, rating, verifiedPurchase, sortBy = 'createdAt', order = 'desc', page = 1, limit = 10 } = req.query;
+
+        const searchFilters = { productId: parseInt(productId) };
+
+        if (query) {
+            searchFilters.$or = [
+                { title: { $regex: query, $options: "i" } },
+                { content: { $regex: query, $options: "i" } }
+            ];
+        }
+
+        if (rating) {
+            searchFilters.rating = parseInt(rating);
+        }
+
+        if (verifiedPurchase !== undefined) {
+            searchFilters.verifiedPurchase = verifiedPurchase === 'true';
+        }
+
+        const reviews = await getReviewsWithFilters(searchFilters, { sortBy, order, page, limit });
+
+        if (!reviews || reviews.totalReviews === 0) {
+            return res.status(404).json({ error: "Brak recenzji spełniających kryteria wyszukiwania", productId });
+        }
+
+        res.status(200).json(reviews);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Błąd serwera" });
     }
 };
+
+
+const updateReviewById = async (req, res) => {
+    try {
+        const newReviewData = req.body;
+        let {reviewId} = req.params;
+        reviewId = new ObjectId(reviewId)
+        const existingReview = await getReview(reviewId)
+
+        if (!existingReview) {
+            return res.status(400).json({error: "Nie ma recenzji o tym id"})
+        }
+
+        const result = await updateReview(reviewId, newReviewData)
+
+        if (result.matchedCount === 0) {
+            return res.status(400).json({error: 'Nie udało się zaktualizować recenzji'})
+        }
+
+        const updatedReview = await getReview(reviewId);
+
+        res.status(200).json(updatedReview)
+    } catch (err) {
+        throw new Error(`Błąd aktualizacji recenzji: ${err.message}`);
+    }
+}
+
+
+const deleteReviewById = async (req,res) => {
+    try {
+        let {reviewId} = req.params;
+        reviewId = new ObjectId(reviewId)
+
+        const result = await deleteReview(reviewId);
+
+        if (result.deletedCount === 0 ) {
+            return res.status(400).json({error: "Nie udalo sie usunac "})
+        }
+
+        res.status(200).json({message: `Pomyslnie usunieto review o id: ${reviewId}`})
+    } catch (err) {
+        res.status(500).json({error: "Błąd serwera"})
+    }
+}
+
+
+
 
 module.exports = {
-    getReviews,
-    getReviewById,
-    getReviewsByProductId,
-    getReviewsByUserId,
     addReview,
-    updateReview,
-    deleteReview
-};
+    getProductReviewsWithFilters,
+    updateReviewById,
+    deleteReviewById,
+    getAllReviews,
+}
+

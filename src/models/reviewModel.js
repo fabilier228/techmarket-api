@@ -1,103 +1,80 @@
-const db = require('../config/database');
+const { connectToDatabase } = require("../config/mongo");
+const { createReviewSchema } = require("../schemas/reviewSchema")
 
-const Review = {
-    getAll: async () => {
-        try {
-            const reviews = await db
-                .select('*')
-                .from('reviews');
-            return reviews;
-        } catch (err) {
-            console.error('❌ Błąd podczas pobierania recenzji:', err);
-            throw err;
-        }
-    },
+const COLLECTION = 'reviews'
 
-    // Pobiera recenzję po ID
-    getById: async (id) => {
-        try {
-            const review = await db
-                .select('*')
-                .from('reviews')
-                .where('id', id)
-                .first();
-            return review;
-        } catch (err) {
-            console.error('❌ Błąd podczas pobierania recenzji po ID:', err);
-            throw err;
-        }
-    },
+const connectToClient = async () => {
+    const client = await connectToDatabase();
+    return client.db("test-mongo").collection(COLLECTION);
+}
 
-    getByProductId: async (product_id) => {
-        try {
-            const reviews = await db
-                .select('*')
-                .from('reviews')
-                .where('product_id', product_id);
-            return reviews;
-        } catch (err) {
-            console.error('❌ Błąd podczas pobierania recenzji po product_id:', err);
-            throw err;
-        }
-    },
+const getReview = async (reviewId) => {
+    const reviewCollection = await connectToClient();
+    const result = await reviewCollection.findOne({_id: reviewId})
+    return result;
+}
 
-    // Pobiera recenzje po ID użytkownika
-    getByUserId: async (user_id) => {
-        try {
-            const reviews = await db
-                .select('*')
-                .from('reviews')
-                .where('user_id', user_id);
-            return reviews;
-        } catch (err) {
-            console.error('❌ Błąd podczas pobierania recenzji po user_id:', err);
-            throw err;
-        }
-    },
+const getAll = async () => {
+    const reviewCollection = await connectToClient();
+    const result = await reviewCollection.find({}).toArray();
+    return result
+}
 
-    // Tworzy nową recenzję
-    create: async (product_id, user_id, rating, comment) => {
-        try {
-            const { rows } = await db.raw(`
-                INSERT INTO reviews (product_id, user_id, rating, comment)
-                VALUES (?, ?, ?, ?)
-                RETURNING *;
-            `, [product_id, user_id, rating, comment]);
+const createNewReview = async (reviewData) => {
+    const reviewCollection = await connectToClient();
 
-            return rows[0]; // Zwraca pełny obiekt nowo utworzonej recenzji
-        } catch (err) {
-            console.error('❌ Błąd podczas tworzenia recenzji:', err);
-            throw err;
-        }
-    },
+    const result = await reviewCollection.insertOne(reviewData);
 
-    // Aktualizuje istniejącą recenzję
-    update: async (id, { rating, comment }) => {
-        try {
-            const [updatedReview] = await db('reviews')
-                .where('id', id)
-                .update({ rating, comment })
-                .returning('*');
-            return updatedReview;
-        } catch (err) {
-            console.error('❌ Błąd podczas aktualizacji recenzji:', err);
-            throw err;
-        }
-    },
+    return result.insertedId;
+}
 
-    // Usuwa recenzję
-    delete: async (id) => {
-        try {
-            const [deletedReview] = await db('reviews')
-                .where('id', id)
-                .del() // Usuwa recenzję
-                .returning('*');
-            return deletedReview;
-        } catch (err) {
-            console.error('❌ Błąd podczas usuwania recenzji:', err);
-            throw err;
-        }
-    }
+const getReviewsWithFilters = async (filters, { sortBy = 'createdAt', order = 'desc', page = 1, limit = 10 }) => {
+    const reviewCollection = await connectToClient();
+
+    const sortOrder = order === 'asc' ? 1 : -1;
+    const skip = (page - 1) * limit;
+
+    const reviews = await reviewCollection.find(filters)
+        .sort({ [sortBy]: sortOrder })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .toArray();
+
+    const totalReviews = await reviewCollection.countDocuments(filters);
+
+    return {
+        reviews,
+        totalReviews,
+        totalPages: Math.ceil(totalReviews / limit),
+        currentPage: page
+    };
 };
 
-module.exports = Review;
+
+const updateReview = async (reviewId, newReviewData) => {
+    const reviewCollection = await connectToClient();
+
+    const result = await reviewCollection.updateOne(
+        { _id: reviewId }, // Warunek wyszukiwania recenzji po ID
+        { $set: newReviewData } // Zaktualizowanie danych recenzji
+    );
+
+    return result;
+}
+
+const deleteReview = async (reviewId) => {
+    const reviewCollection = await connectToClient();
+
+    const result = await reviewCollection.deleteOne({_id: reviewId})
+
+    return result;
+}
+
+module.exports = {
+    getReview,
+    createNewReview,
+    updateReview,
+    deleteReview,
+    getReviewsWithFilters,
+    getAll
+}
