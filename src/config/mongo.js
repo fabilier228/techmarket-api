@@ -19,7 +19,6 @@ async function connectToDatabase() {
         };
 
         if (client) {
-            console.log("Używam istniejącego połączenia z MongoDB");
             return client;
         }
 

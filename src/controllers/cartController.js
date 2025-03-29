@@ -21,9 +21,21 @@ const addToCart = async (req, res) => {
             dateAdded: new Date()
         }
 
-        const insertResult = await cartCollection.insertOne(result)
+        let existingItem = await cartCollection.findOne({ userId, productId });
+        let cartId
 
-        res.status(200).json({ message: "Produkt dodany do koszyka", cartId: insertResult.insertedId});
+        if (existingItem) {
+            await cartCollection.updateOne(
+                { _id: existingItem._id },
+                { $inc: { quantity: quantity }, $set: { dateAdded: new Date() } }
+            );
+            cartId = existingItem._id
+        } else {
+            const insertResult = await cartCollection.insertOne(result);
+            cartId = insertResult.insertedId
+        }
+
+        res.status(200).json({ message: "Produkt dodany do koszyka", cartId: cartId});
     } catch (error) {
         res.status(500).json({ error: "Błąd serwera" });
     }
@@ -36,40 +48,9 @@ const getCart = async (req, res) => {
         const client = await connectToDatabase();
         const cartCollection = await client.db("test-mongo").collection("carts");
 
-        const cart = await cartCollection.findOne({ userId });
-        console.log(cart)
+        const cart = await cartCollection.find({userId: parseInt(userId)}).toArray();
 
         res.status(200).json(cart || { userId, items: [] });
-    } catch (error) {
-        res.status(500).json({ error: "Błąd serwera" });
-    }
-};
-
-const updateQuantity = async (req, res) => {
-    try {
-        const { userId, productId, quantity } = req.body;
-
-        // Walidacja danych
-        const { isValid, errors } = cartSchema.validateCartItem({ userId, productId, quantity });
-        if (!isValid) {
-            return res.status(400).json({ errors });
-        }
-
-        if (quantity <= 0) {
-            return res.status(400).json({ error: "Ilość musi być większa od 0" });
-        }
-
-        const cartCollection = await getCartCollection();
-        const result = await cartCollection.updateOne(
-            { userId, "items.productId": productId },
-            { $set: { "items.$.quantity": quantity } }
-        );
-
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ error: "Produkt nie znaleziony w koszyku" });
-        }
-
-        res.status(200).json({ message: "Ilość produktu zaktualizowana" });
     } catch (error) {
         res.status(500).json({ error: "Błąd serwera" });
     }
@@ -79,21 +60,35 @@ const removeFromCart = async (req, res) => {
     try {
         const { userId, productId } = req.body;
 
-        // Walidacja danych
-        const { isValid, errors } = cartSchema.validateCartItem({ userId, productId });
-        if (!isValid) {
-            return res.status(400).json({ errors });
+        const client = await connectToDatabase();
+        const cartCollection = await client.db("test-mongo").collection("carts");
+
+        const productInCart = await cartCollection.findOne({
+            userId: parseInt(userId),
+            productId: parseInt(productId)
+        });
+        console.log(productInCart)
+
+        if (!productInCart) {
+            return res.status(404).json({ error: "Produkt nie znaleziony w koszyku" });
         }
 
-        const cartCollection = await getCartCollection();
+        if (productInCart.quantity <= 1) {
+            await cartCollection.deleteOne({
+                userId: parseInt(userId),
+                productId: parseInt(productId)
+            });
 
-        const result = await cartCollection.updateOne(
-            { userId },
-            { $pull: { items: { productId } } }
-        );
-
-        if (result.modifiedCount === 0) {
-            return res.status(404).json({ error: "Produkt nie znaleziony w koszyku" });
+        } else {
+            await cartCollection.updateOne(
+                { _id: productInCart._id },
+                {
+                    $inc: { quantity: -1 },
+                    $set: { dateAdded: new Date() }
+                }
+            );
+            res.status(200).json({ message: "Ilość produktu zaktualizowana" });
+            return
         }
 
         res.status(200).json({ message: "Produkt usunięty z koszyka" });
@@ -105,6 +100,5 @@ const removeFromCart = async (req, res) => {
 module.exports = {
     addToCart,
     removeFromCart,
-    updateQuantity,
     getCart
 };
