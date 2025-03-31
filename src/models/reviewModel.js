@@ -1,5 +1,4 @@
 const { connectToDatabase } = require("../config/mongo");
-const { createReviewSchema } = require("../schemas/reviewSchema")
 
 const COLLECTION = 'reviews'
 
