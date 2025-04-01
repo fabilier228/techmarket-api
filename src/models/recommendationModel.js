@@ -11,35 +11,42 @@ const makeRecommendationForUser = async (userId) => {
     try {
         const productViewsCollection = await connectToClient();
 
-        // 1️⃣ Pobierz historię przeglądania danego użytkownika
-        const userHistory = await productViewsCollection.distinct("productId", { userId });
+        const userHistory = await productViewsCollection.aggregate([
+            { $match: { userId: userId } },
+            { $group: { _id: "$productId", count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+        ]).toArray();
 
-        if (userHistory.length === 0) {
-            return []; // Jeśli użytkownik nic nie oglądał, brak rekomendacji
-        }
+        const mostViewedProduct = userHistory[0]._id;
+        console.log(mostViewedProduct)
 
-        // 2️⃣ Znajdź innych użytkowników, którzy oglądali te same produkty
-        const similarUsers = await productViewsCollection.distinct("userId", {
-            productId: { $in: userHistory },
-            userId: { $ne: userId } // Wykluczamy samego użytkownika
-        });
+        const similarUsers = await productViewsCollection.aggregate([
+            { $match: { productId: mostViewedProduct, userId: { $ne: userId } } },
+            { $group: { _id: "$userId", count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+        ]).toArray();
 
-        if (similarUsers.length === 0) {
-            return []; // Brak podobnych użytkowników → brak rekomendacji
-        }
 
-        // 3️⃣ Pobierz produkty oglądane przez podobnych użytkowników, ale nie przez użytkownika
-        const recommendedProducts = await productViewsCollection.distinct("productId", {
-            userId: { $in: similarUsers },
-            productId: { $nin: userHistory } // Wykluczamy produkty, które użytkownik już widział
-        });
+        const bestMatchingUser = similarUsers[0]._id;
+        console.log(bestMatchingUser)
+        const recommendedProduct = await productViewsCollection.aggregate([
+            { $match: { userId: parseInt(bestMatchingUser), productId: { $ne: parseInt(mostViewedProduct) } } },
+            { $group: { _id: "$productId", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 1 }
+        ]).toArray();
 
-        return recommendedProducts;
+        console.log(recommendedProduct)
+
+        return {
+            recommendedProduct: recommendedProduct
+        };
     } catch (error) {
         console.error("Error generating recommendations:", error);
         return [];
     }
 };
+
 
 module.exports = {
     makeRecommendationForUser
