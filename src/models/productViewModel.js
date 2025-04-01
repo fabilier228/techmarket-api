@@ -13,6 +13,12 @@ const getProductView = async (viewId) => {
     return result;
 };
 
+const getUserHistoryView = async (userId) => {
+    const productViewCollection = await connectToClient();
+    const history = await productViewCollection.find({userId: userId})
+    return history;
+}
+
 const getAllProductViews = async () => {
     const productViewCollection = await connectToClient();
     return await productViewCollection.find({}).toArray();
@@ -43,8 +49,57 @@ const deleteAllProductViews = async () => {
     await productViewCollection.deleteMany({})
 }
 
-const getViewStatsOnProduct = async () => {
+const getViewStatsOnProducts = async () => {
+    const productViewCollection = await connectToClient();
+    const stats = await productViewCollection.aggregate([
+        {
+            $group: {
+                _id: "$productId",
+                totalViews: { $sum: 1 },
+                uniqueUsers: { $addToSet: "$userId" },
+                avgDuration: { $avg: "$duration" }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                productId: "$_id",
+                totalViews: 1,
+                uniqueUsers: { $size: "$uniqueUsers" },
+                avgDuration: 1
+            }
+        }
+    ]).toArray();
 
+    return stats;
+}
+
+const trendViewOverTime = async () => {
+    const productViewCollection = await connectToClient();
+    const trend = await productViewCollection.aggregate([
+        {
+            $addFields: { viewDate: { $toDate: "$viewDate" } }
+        },
+        {
+            $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$viewDate" } },
+                totalViews: { $sum: 1 },
+                uniqueUsers: { $addToSet: "$userId" },
+                avgDuration: { $avg: "$duration" }
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                totalViews: 1,
+                uniqueUsers: { $size: "$uniqueUsers" },
+                avgDuration: 1
+            }
+        },
+        { $sort: { _id: 1 } }
+    ]).toArray();
+
+    return trend;
 }
 
 module.exports = {
@@ -54,5 +109,7 @@ module.exports = {
     deleteProductView,
     getAllProductViews,
     deleteAllProductViews,
-    getViewStatsOnProduct
+    getViewStatsOnProducts,
+    trendViewOverTime,
+    getUserHistoryView
 };
