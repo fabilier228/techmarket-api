@@ -69,11 +69,60 @@ const deleteReview = async (reviewId) => {
     return result;
 }
 
+const deleteAllReviews = async () => {
+    const reviewCollection = await connectToClient()
+    await reviewCollection.deleteMany({})
+}
+
+const getReviewStatsByRating = async () => {
+    const reviewCollection = await connectToClient()
+    const stats = await reviewCollection.aggregate([
+        {
+            $group: {
+                _id: "$productId",
+                count: { $sum: 1 },
+                avgRating: { $avg: "$rating" }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                productId: "$_id",
+                count: 1,
+                avgRating: 1
+            }
+        }
+    ]).toArray();
+
+    return stats
+}
+
+const getReviewCountDaily = async () => {
+    const reviewCollection = await connectToClient()
+    const trend = await reviewCollection.aggregate([
+        {
+            $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$reviewDate" } },
+                totalReviews: { $sum: 1 },
+                avgRating: { $avg: "$rating" }
+            }
+        },
+        {
+            $sort: { _id: 1 }
+        }
+    ]).toArray();
+
+    return trend
+}
+
 module.exports = {
     getReview,
     createNewReview,
     updateReview,
     deleteReview,
     getReviewsWithFilters,
-    getAll
+    getAll,
+    deleteAllReviews,
+    getReviewStatsByRating,
+    getReviewCountDaily
 }

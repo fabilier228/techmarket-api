@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "jest",
-    "start": "bash start.sh"
+    "start": "bash start.sh",
+    "fill": "node src/scripts/fillDatabase.js"
   },
   "keywords": [],
   "author": "",

@@ -43,11 +43,16 @@ const deleteAllProductViews = async () => {
     await productViewCollection.deleteMany({})
 }
 
+const getViewStatsOnProduct = async () => {
+
+}
+
 module.exports = {
     getProductView,
     createNewProductView,
     updateProductView,
     deleteProductView,
     getAllProductViews,
-    deleteAllProductViews
+    deleteAllProductViews,
+    getViewStatsOnProduct
 };
