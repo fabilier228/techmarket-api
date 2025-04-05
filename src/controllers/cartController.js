@@ -75,9 +75,6 @@ const getCart = async (req, res) => {
         const similarProducts = await Promise.all(similarProductsPromises);
 
 
-
-
-
         res.status(200).json({cart: newCart,
                         recommendation: recommendationFromAnotherUser,
                         similarProducts:similarProducts} || { userId, items: [] });
