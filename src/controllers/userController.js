@@ -23,17 +23,6 @@ const getUserById = async (req, res) => {
     }
 };
 
-const addUser = async (req, res) => {
-    const { username, email, password_hash, first_name, last_name } = req.body;
-
-    try {
-        const newUser = await User.create(username, email, password_hash, first_name, last_name);
-        res.status(201).json(newUser);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
 const updateUser = async (req, res) => {
     const { id } = req.params;
     const { username, email, password_hash, firstName, lastName } = req.body;
@@ -69,7 +58,6 @@ const deleteUser = async (req, res) => {
 module.exports = {
     getUsers,
     getUserById,
-    addUser,
     updateUser,
     deleteUser
 };

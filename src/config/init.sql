@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
                          password_hash TEXT NOT NULL,
                          first_name VARCHAR(50),
                          last_name VARCHAR(50),
-                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                         role VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS products (
@@ -43,7 +44,10 @@ CREATE TABLE IF NOT EXISTS reviews (
 
 INSERT INTO categories (name, description) VALUES
                    ('Electronics', 'Devices and gadgets'),
-                   ('Clothing', 'Apparel and accessories')
+                   ('Clothing', 'Apparel and accessories'),
+                   ('Books', 'Books and magazines'),
+                   ('Home & Kitchen', 'Home appliances and kitchenware'),
+                   ('Toys', 'Games and toys for children')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO users (username, email, password_hash, first_name, last_name) VALUES
@@ -52,6 +56,14 @@ INSERT INTO users (username, email, password_hash, first_name, last_name) VALUES
 ON CONFLICT DO NOTHING;
 
 INSERT INTO products (name, category_id, description, price, stock_count, brand, image_url, is_available) VALUES
-                   ('Smartphone2222', 1, 'Latest model smartphone', 699.99, 50, 'BrandX', 'http://example.com/phone.jpg', TRUE),
-                   ('Jeans', 2, 'Blue denim jeans', 49.99, 100, 'DenimCo', 'http://example.com/jeans.jpg', TRUE)
+                  ('Smartphone X10', 1, 'High-end smartphone with AMOLED display', 899.99, 30, 'TechCorp', 'http://example.com/phone1.jpg', TRUE),
+                  ('Wireless Earbuds', 1, 'Noise cancelling, Bluetooth 5.0', 129.99, 200, 'SoundX', 'http://example.com/earbuds.jpg', TRUE),
+                  ('Gaming Laptop', 1, 'RTX 3060, 16GB RAM, 1TB SSD', 1499.99, 15, 'GamePower', 'http://example.com/laptop.jpg', TRUE),
+                  ('Jeans', 2, 'Blue denim jeans', 49.99, 100, 'DenimCo', 'http://example.com/jeans.jpg', TRUE),
+                  ('T-Shirt', 2, 'Cotton T-Shirt with print', 19.99, 150, 'CoolWear', 'http://example.com/tshirt.jpg', TRUE),
+                  ('Coffee Maker', 4, '12-cup programmable coffee maker', 59.99, 40, 'KitchenPro', 'http://example.com/coffeemaker.jpg', TRUE),
+                  ('Harry Potter Book Set', 3, 'Complete 7-book collection', 79.99, 25, 'Scholastic', 'http://example.com/hpbooks.jpg', TRUE),
+                  ('LEGO Star Wars', 5, 'Millennium Falcon building kit', 149.99, 10, 'LEGO', 'http://example.com/lego.jpg', TRUE),
+                  ('Bluetooth Speaker', 1, 'Portable waterproof speaker', 39.99, 80, 'BeatBox', 'http://example.com/speaker.jpg', TRUE),
+                  ('Kitchen Knife Set', 4, 'Stainless steel knives', 89.99, 60, 'SharpEdge', 'http://example.com/knives.jpg', TRUE)
 ON CONFLICT DO NOTHING;

@@ -18,7 +18,6 @@ const makeRecommendationForUser = async (userId) => {
         ]).toArray();
 
         const mostViewedProduct = userHistory[0]._id;
-        console.log(mostViewedProduct)
 
         const similarUsers = await productViewsCollection.aggregate([
             { $match: { productId: mostViewedProduct, userId: { $ne: userId } } },
@@ -28,7 +27,6 @@ const makeRecommendationForUser = async (userId) => {
 
 
         const bestMatchingUser = similarUsers[0]._id;
-        console.log(bestMatchingUser)
         const recommendedProduct = await productViewsCollection.aggregate([
             { $match: { userId: parseInt(bestMatchingUser), productId: { $ne: parseInt(mostViewedProduct) } } },
             { $group: { _id: "$productId", count: { $sum: 1 } } },
@@ -36,7 +34,6 @@ const makeRecommendationForUser = async (userId) => {
             { $limit: 1 }
         ]).toArray();
 
-        console.log(recommendedProduct)
 
         return {
             recommendedProduct: recommendedProduct

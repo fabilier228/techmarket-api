@@ -6,6 +6,8 @@ const reviewRoutes = require("./src/routes/reviewRoutes");
 const cartRoutes = require("./src/routes/cartRoutes")
 const analyticsRoutes = require("./src/routes/analyticsRoutes")
 const recommendationRoutes = require("./src/routes/recommendationRoutes")
+const synchroniseRoutes = require("./src/routes/synchroniseRoutes")
+const authRoutes = require("./src/routes/authRoutes")
 
 const { connectToDatabase } = require("./src/config/mongo")
 
@@ -34,6 +36,8 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/cart", cartRoutes)
 app.use("/api/analytics", analyticsRoutes)
 app.use("/api/recommendation", recommendationRoutes)
+app.use("/api/products", synchroniseRoutes)
+app.use("/api/auth", authRoutes)
 
 app.listen(PORT, () => {
     console.log(`🚀 Serwer działa na http://localhost:${PORT}`);

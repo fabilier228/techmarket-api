@@ -10,7 +10,6 @@ const Product = {
                 .join('categories', 'products.category_id', 'categories.id')
                 .orderBy('products.id'); // Sortuje według ID produktu
 
-            console.log(products)
             return products;
         } catch (err) {
             console.error('❌ Błąd podczas pobierania produktów:', err);
@@ -93,6 +92,46 @@ const Product = {
         } catch (err) {
             console.error('❌ Błąd podczas brania produktów tej kategorii:', err);
             throw err
+        }
+    },
+
+    updateAll: async (column, data) => {
+        try {
+            const hasColumn = await db.schema.hasColumn('products', column);
+            if (!hasColumn) {
+                await db.schema.table('products', (table) => {
+                    table.float(column);
+                });
+            }
+            let updatedCount = 0;
+
+            for (const item of data) {
+                const result = await db('products')
+                    .where('id', item.productId)
+                    .update({ [column]: item.avgRating });
+
+                updatedCount += result
+            }
+
+            return updatedCount
+        } catch (err) {
+            console.error('❌ Błąd podczas dodawania nowej kolumny:', err);
+            throw err
+        }
+
+    },
+
+    findSimilarProduct: async (productId) => {
+        try {
+            const product = await Product.getById(productId)
+            const result = await db('products')
+                .select("*")
+                .where("category_id", product.category_id)
+                .whereNot("name", product.name);
+            return {name: result[0].name, price: result[0].price};
+        } catch (err) {
+            console.error('❌ Błąd podczas wyszukiwania podobnego produktu:', err);
+            throw err;
         }
     }
 };

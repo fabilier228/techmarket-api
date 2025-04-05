@@ -1,5 +1,7 @@
 const { connectToDatabase } = require("../config/mongo");
 const cartSchema = require("../schemas/cartSchema");
+const {makeRecommendationForUser} = require("../models/recommendationModel")
+const Product = require("../models/productModel")
 
 
 const addToCart = async (req, res) => {
@@ -48,6 +50,8 @@ const getCart = async (req, res) => {
         const client = await connectToDatabase();
         const cartCollection = await client.db("test-mongo").collection("carts");
 
+        const recommendationFromAnotherUser = makeRecommendationForUser(parseInt(userId))
+
         const cart = await cartCollection.find({userId: parseInt(userId)}).toArray();
 
         if (cart.length === 0) {
@@ -55,7 +59,6 @@ const getCart = async (req, res) => {
         }
 
         const newCart = cart.reduce((acc, item) => {
-            console.log(item);
             acc.items.push({ productId: item.productId, quantity: item.quantity });
             return acc;
         }, {
@@ -63,10 +66,21 @@ const getCart = async (req, res) => {
             userId: cart[0].userId,
             items: []
         });
+        const similarProductsPromises = newCart.items.map(async (product) => {
+            console.log(product)
+            const similar = await Product.findSimilarProduct(product.productId)
+            return similar
+        })
 
-        console.log(newCart)
+        const similarProducts = await Promise.all(similarProductsPromises);
 
-        res.status(200).json(newCart || { userId, items: [] });
+
+
+
+
+        res.status(200).json({cart: newCart,
+                        recommendation: recommendationFromAnotherUser,
+                        similarProducts:similarProducts} || { userId, items: [] });
     } catch (error) {
         res.status(500).json({ error: "Błąd serwera" });
     }

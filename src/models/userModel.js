@@ -1,4 +1,7 @@
 const db = require('../config/database');
+const bcrypt = require("bcrypt")
+
+const SALT_ROUNDS = 10;
 
 const User = {
     getAll: async () => {
@@ -30,8 +33,10 @@ const User = {
     },
 
     // Tworzy nowego użytkownika
-    create: async (username, email, password_hash, first_name, last_name) => {
+    create: async (username, email, password, first_name, last_name) => {
         try {
+            const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+
             const [newUser] = await db('users')
                 .insert({ username, email, password_hash, first_name, last_name })
                 .returning('*');
@@ -68,7 +73,21 @@ const User = {
             console.error('❌ Błąd podczas usuwania użytkownika:', err);
             throw err;
         }
-    }
+    },
+
+    comparePassword: async (plainPassword, hash) => {
+        return await bcrypt.compare(plainPassword, hash);
+    },
+
+
+    findByEmail: async (email) => {
+        try {
+            return await db('users').where({ email }).first();
+        } catch (err) {
+            console.error('❌ Błąd przy wyszukiwaniu użytkownika po emailu:', err);
+            throw err;
+        }
+    },
 };
 
 module.exports = User;
