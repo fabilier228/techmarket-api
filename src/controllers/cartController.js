@@ -2,11 +2,20 @@ const { connectToDatabase } = require("../config/mongo");
 const cartSchema = require("../schemas/cartSchema");
 const {makeRecommendationForUser} = require("../models/recommendationModel")
 const Product = require("../models/productModel")
+const jwt = require('jsonwebtoken');
+const SECRET_KEY = process.env.JWT_SECRET || 'tajny_klucz';
 
 
 const addToCart = async (req, res) => {
     try {
-        const { userId, productId, quantity } = req.body;
+        const {productId, quantity } = req.body;
+
+
+        const authHeader = req.headers.authorization;
+        const token = authHeader.split(' ')[1];
+
+        const decoded = jwt.verify(token, SECRET_KEY); // make sure you use the right secret!
+        const userId = decoded.id;
 
         const { isValid, errors } = cartSchema.validateCartItem({ userId, productId, quantity });
         if (!isValid) {
@@ -45,12 +54,18 @@ const addToCart = async (req, res) => {
 
 const getCart = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const authHeader = req.headers.authorization;
+        const token = authHeader.split(' ')[1];
+
+        const decoded = jwt.verify(token, SECRET_KEY); // make sure you use the right secret!
+        const userId = decoded.id;
+
+        console.log(userId)
 
         const client = await connectToDatabase();
         const cartCollection = await client.db("test-mongo").collection("carts");
 
-        const recommendationFromAnotherUser = makeRecommendationForUser(parseInt(userId))
+        const recommendationFromAnotherUser = await makeRecommendationForUser(parseInt(userId))
 
         const cart = await cartCollection.find({userId: parseInt(userId)}).toArray();
 
@@ -73,6 +88,8 @@ const getCart = async (req, res) => {
         })
 
         const similarProducts = await Promise.all(similarProductsPromises);
+
+        console.log(newCart, similarProducts)
 
 
         res.status(200).json({cart: newCart,

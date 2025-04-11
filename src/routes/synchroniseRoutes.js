@@ -8,9 +8,9 @@ const { authenticate, authorize } = require('../middleware/authorizationMiddlewa
 
 const router = express.Router();
 
-router.post("/:productId/sync",authenticate, authorize('admin'), synchroniseProductById)
-router.post("/sync", authenticate, authorize('admin'), synchroniseAllProducts);
-router.patch("/sync-ratings", authenticate, authorize('admin'), synchroniseAvgRatingForProducts)
+router.post("/:productId/sync",authenticate, synchroniseProductById)
+router.post("/sync", authenticate, synchroniseAllProducts);
+router.patch("/sync-ratings", authenticate, synchroniseAvgRatingForProducts)
 
 
 module.exports = router;
