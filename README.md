@@ -26,14 +26,14 @@ A robust e-commerce API built with Node.js, Express, and MongoDB, providing a co
 
 - Node.js (v14 or higher)
 - MongoDB
-- PostgreSQL (optional, for additional features)
+- PostgreSQL
 - npm or yarn
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone [repository-url]
+git clone https://github.com/fabilier228/techmarket-api.git
 cd techmarket-api
 ```
 
